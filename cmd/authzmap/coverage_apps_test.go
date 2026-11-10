@@ -1,0 +1,75 @@
+package main
+
+import "time"
+
+// coverageApps: what the scan can and can't see. API servers (gRPC-gateway,
+// connect, gqlgen, ogen, oapi-codegen), routers it doesn't model, dynamic
+// paths, dead code, build tags and the walk's own limits.
+var coverageApps = map[string]appCase{
+	"baseurl_concat":   {incomplete: true, exit: 3, checkExit: true},
+	"c01_reflect":      {M: []string{"* <\"/\" + strings.ToLower(t.Method(i).Name)>"}, P: []string{"* /health"}, exit: 1, checkExit: true},
+	"c02_iface_router": {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset"}, Q: []string{"GET /api/notes", "POST /api/notes"}, exit: 1, checkExit: true},
+	"c03_oapi_echo":    {M: []string{"DELETE /admin/users/:id", "POST /admin/reset"}, exit: 1, checkExit: true},
+	"c04_oapi_chi_mw":  {M: []string{"DELETE /open/admin/users/{id}"}, Q: []string{"DELETE /v1/admin/users/{id}"}, exit: 1, checkExit: true},
+	"c05_grpcgw":       {M: []string{"* /"}, P: []string{"* /health"}, incomplete: true, exit: 1, checkExit: true},
+	"c05b_grpcgw_gen":  {M: []string{"* /"}, incomplete: true, exit: 1, checkExit: true},
+	"c06_connect":      {M: []string{"* <path>"}, exit: 1, checkExit: true},
+	"c06b_connect_gen": {M: []string{"* <path>"}, incomplete: true, exit: 1, checkExit: true},
+	"c07_gqlgen":       {M: []string{"* /query", "* /"}, exit: 1, checkExit: true},
+	// the ogen server handed to ListenAndServe is found as an unanalysed API
+	"c08_ogen":           {M: []string{"* /"}, exit: 1, checkExit: true},
+	"c09_append_table":   {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset"}, exit: 1, checkExit: true},
+	"c10_method_value":   {M: []string{"DELETE /admin/users/{id}"}, exit: 1, checkExit: true},
+	"c11_dynamic_path":   {M: []string{"DELETE <prefix + \"/users/{id}\">", "POST <prefix + \"/reset\">"}, exit: 1, checkExit: true},
+	"c12_gorilla_chain":  {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset", "PUT /admin/settings"}, exit: 1, checkExit: true},
+	"c13_echo_gin_misc":  {M: []string{"* /admin/any", "DELETE /admin/users/:id", "POST /admin/match", "PUT /admin/match", "* /gadmin/any", "DELETE /gadmin/users/:id", "POST /gadmin/match"}, exit: 1, checkExit: true},
+	"c14_unknown_router": {incomplete: true, exit: 3, checkExit: true},
+	"c15_beego":          {incomplete: true, exit: 3, checkExit: true},
+	// hertz is modelled: its routes are read, not listed as unseen
+	"c16_hertz":              {M: []string{"DELETE /admin/users/:id", "POST /admin/reset"}, exit: 1, checkExit: true},
+	"c17_iris":               {incomplete: true, exit: 3, checkExit: true},
+	"connect_wrapped_pair":   {Q: []string{"* <path>"}, exit: 0, checkExit: true},
+	"dead_helper_other_pkg":  {Q: []string{"DELETE /admin/users/{id}"}, exit: 0, checkExit: true},
+	"dead_named_in_comment":  {Q: []string{"DELETE /api/users/{id}"}, exit: 0, checkExit: true},
+	"dead_only_registration": {M: []string{"DELETE /tools/cache"}, Q: []string{"GET /api/me"}, exit: 1, checkExit: true},
+	// routes authzmap can't model make the scan incomplete
+	"e1_httprouter_mixed":    {incomplete: true, exit: exitIncomplete, checkExit: true},
+	"e3_unseen_exit":         {incomplete: true, exit: exitIncomplete, checkExit: true},
+	"e4_dispatch":            {incomplete: true, exit: -1, checkExit: true},
+	"gateway_server_wrapped": {Q: []string{"* /"}, exit: 0, checkExit: true},
+	"gateway_strip":          {M: []string{"* /rpc/"}, exit: 1, checkExit: true},
+	"gin_wraph_gateway":      {M: []string{"* /rpc/*path"}, Q: []string{"DELETE /app/notes/:id"}, exit: 1, checkExit: true},
+	"gql_authed":             {Q: []string{"* /graphql"}, exit: 0, checkExit: true},
+	// build-tagged variants: the unguarded one is reported
+	"i1_tags":                          {M: []string{"DELETE /admin/users/{id}"}},
+	"m01_oapi_echo_mixed":              {M: []string{"DELETE /admin/users/:id", "POST /admin/reset"}, Q: []string{"DELETE /app/notes/:id", "GET /app/me", "POST /app/notes"}, exit: 1, checkExit: true},
+	"m02_grpcgw_mixed":                 {M: []string{"* /v1/*"}, Q: []string{"DELETE /app/notes/{id}", "GET /app/me", "POST /app/notes"}, incomplete: true, exit: 1, checkExit: true},
+	"m03_ogen_mixed":                   {M: []string{"* /api/"}, Q: []string{"DELETE /app/notes/{id}", "GET /app/me", "POST /app/notes"}, exit: 1, checkExit: true},
+	"m04_gql_mixed":                    {M: []string{"* /query"}, Q: []string{"DELETE /api/notes/{id}", "GET /api/me", "POST /api/notes"}, exit: 1, checkExit: true},
+	"m05_iface_mixed":                  {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset"}, Q: []string{"DELETE /api/notes/{id}", "GET /api/notes", "POST /api/notes"}, exit: 1, checkExit: true},
+	"m06_concrete_method":              {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset"}, Q: []string{"DELETE /api/notes/{id}", "GET /api/notes", "POST /api/notes"}, exit: 1, checkExit: true},
+	"m07_reflect_mixed":                {M: []string{"* <\"/\" + strings.ToLower(t.Method(i).Name)>"}, Q: []string{"GET /app/me", "POST /app/notes"}, exit: 1, checkExit: true},
+	"m08_handler_struct":               {M: []string{"DELETE /admin/users/{id}", "POST /admin/reset"}, Q: []string{"DELETE /api/notes/{id}", "GET /api/notes", "POST /api/notes"}, exit: 1, checkExit: true},
+	"m09_handler_ctor":                 {M: []string{"DELETE /open/files/:id"}, Q: []string{"DELETE /admin/users/:id", "POST /admin/reset", "POST /open/reset"}, exit: 1, checkExit: true},
+	"own_wrapper_unseen":               {incomplete: true, exit: 1, checkExit: true},
+	"q50_connect_authed_wrap":          {Q: []string{"* <path>"}, exit: 0, checkExit: true},
+	"q51_connect_interceptor_auth":     {Q: []string{"* <adminv1connect.NewAdminServiceHandler>"}, exit: 0, checkExit: true},
+	"q52_connect_direct_multivalue":    {M: []string{"* <adminv1connect.NewAdminServiceHandler>"}, exit: 1, checkExit: true},
+	"q52b_connect_direct_mixed":        {M: []string{"* <adminv1connect.NewAdminServiceHandler>"}, Q: []string{"DELETE /api/users/{id}"}, exit: 1, checkExit: true},
+	"q53_grpcgw_chi_authed":            {Q: []string{"* /v1/*"}, exit: 0, checkExit: true},
+	"q54_grpcgw_echo_open":             {M: []string{"* /v1/*"}, exit: 1, checkExit: true},
+	"q55_gqlgen_gin_open":              {M: []string{"POST /query"}, exit: 1, checkExit: true},
+	"q56_gqlgen_gin_authed":            {Q: []string{"POST /api/query"}, exit: 0, checkExit: true},
+	"q57_grpcgw_var_wrapped":           {Q: []string{"* /v1/"}, exit: 0, checkExit: true},
+	"q58_grpcgw_open_var":              {M: []string{"* /v1/"}, exit: 1, checkExit: true},
+	"q59_grpcgw_server_handler":        {M: []string{"* /"}, exit: 1, checkExit: true},
+	"q59b_grpcgw_server_handler_mixed": {M: []string{"* /"}, Q: []string{"DELETE /api/users/{id}"}, exit: 1, checkExit: true},
+	"q61_pathological_registrars":      {M: []string{"DELETE /m399/items/{id}"}, maxTime: 60 * time.Second, incomplete: true, exit: 1, checkExit: true},
+	"q62_fanout_budget":                {M: []string{"POST /open/admin/reset"}, maxTime: 60 * time.Second, incomplete: true, exit: 1, checkExit: true},
+	"q63_unused_open_variant":          {Q: []string{"DELETE /api/users/{id}", "POST /api/admin/reset"}, exit: 0, checkExit: true},
+	"s1_registrar_fanout":              {maxTime: 60 * time.Second},
+	// a self-recursive helper is followed while its depth argument folds
+	"s2_recursive": {Q: []string{"DELETE /items/{id}", "DELETE /sub/items/{id}", "DELETE /sub/sub/items/{id}"}},
+	// internal/fixtures2 is ordinary code (only fixtures/ is skipped): its route may be reported
+	"z1_vendor": {Q: []string{"DELETE /api/x/{id}"}},
+}

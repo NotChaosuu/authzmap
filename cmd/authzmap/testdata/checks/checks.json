@@ -1,0 +1,1126 @@
+{
+ "p1_mount_four_chains": {
+  "expect": "one api router mounted 4 ways: auth, auth via Group, logger-only, and an enforcing in-tree gate -> only /c/* flagged",
+  "flag": [
+   "DELETE /c/items/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/items",
+   "/b/items",
+   "/d/items"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_helper_builds_and_mounts": {
+  "expect": "a helper creates the sub-router itself and mounts it; called on an authed parent (/v1) and an open one (/v2) -> /v2 flagged, /v1 quiet",
+  "flag": [
+   "DELETE /v2/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/v1/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_server_ctor_two_calls": {
+  "expect": "func newServer(h) *http.Server called with RequireAuth(r) and with bare r; both served -> routes flagged (open listener)",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_server_ctor_wraps_inside": {
+  "expect": "the only server is built by a ctor that wraps its handler in RequireAuth -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_server_ctor_method": {
+  "expect": "a method on an app struct returns *http.Server with the router unwrapped; a second one wraps -> flagged",
+  "flag": [
+   "POST /admin/reset"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_tls_struct_plain_struct": {
+  "expect": "two http.Server values: TLS one authed, plain one with the raw router -> flagged",
+  "flag": [
+   "PUT /settings"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_tls_plain_redirect_only": {
+  "expect": "the plain listener serves only an HTTPS redirect, not the router; TLS is authed -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_httptest_in_test_file": {
+  "expect": "httptest.NewServer(r) in a _test.go file is not a listener; production serves RequireAuth(r) -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_httptest_nontest_helper": {
+  "expect": "httptest.NewServer(routes()) in a non-test helper file (testutil.go) is a test server, not a listener -> quiet (or at most LOW)",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_shared_handler_var_two_muxes": {
+  "expect": "one handler value registered on two muxes; mux A served authed, mux B served open -> flagged on B",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_gin_helper_two_engines": {
+  "expect": "gin route helper called on an authed group of engine 1 and a bare group of engine 2 -> flagged",
+  "flag": [
+   "DELETE /api/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_echo_wrapped_and_start": {
+  "expect": "echo instance served through RequireAuth on one port and via e.Start (open) on another -> flagged",
+  "flag": [
+   "DELETE /admin/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_server_slice_loop": {
+  "expect": "servers in a slice literal, one authed one open, started in a loop -> flagged",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_listen_loop_all_authed": {
+  "expect": "addresses in a loop all served RequireAuth(r) -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_wrapped_var_then_original": {
+  "expect": "wrapped := RequireAuth(r) served on :443, the original r on :8080 -> flagged",
+  "flag": [
+   "POST /admin/reset"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_gorilla_prefix_two_parents": {
+  "expect": "gorilla: one api router behind PathPrefix /a (authed, StripPrefix) and /b (open) -> /b flagged",
+  "flag": [
+   "/b"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_nested_mount_depth3": {
+  "expect": "leaf under mid; mid mounted at /x (authed) and /z (open) on root -> /z/y/* flagged, /x/y/* quiet, no stacked /x/z",
+  "flag": [
+   "DELETE /z/y/rec/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/x/y/rec",
+   "/x/z",
+   "/z/x"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_method_value_mount": {
+  "expect": "m := r.Mount; m(\"/open\", api) alongside an authed mount -> /open flagged",
+  "flag": [
+   "DELETE /open/items/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/secure/items"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p2_inert_branch_sets_flag": {
+  "expect": "an 'inert' branch sets ok=true on X-Debug, later check is `!ok && !valid` -> X-Debug bypasses: conditional/never-rejects MEDIUM, not enforcing",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_inert_branch_overwrites_token": {
+  "expect": "an 'inert' branch overwrites the token with a known-good constant when a legacy cookie is present -> bypass: MEDIUM, not enforcing",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_inert_branch_counter": {
+  "expect": "a counter set in a branch (fails++ on a bad token) decides the later 401 stop -> the branch is NOT inert; this enforces -> quiet (no false never-rejects)",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_enforcing_elseif": {
+  "expect": "13 credential stops each with an else-if credential side branch (>4096 paths) on an unknown-named gate -> unverified MEDIUM or enforcing; never silent-complete trust by name (here the name is neutral so either quiet-enforcing or unverified is acceptable; must not crash/timeout)",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_bypass_first": {
+  "expect": "auth-named middleware: ?debug=1 bypass first, then 13 non-mergeable credential branches (past the 4096 cap) -> MEDIUM (conditional or unverified), never trusted",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_no_bypass_authname": {
+  "expect": "auth-named middleware with 13 non-mergeable credential branches, no bypass -> unverified MEDIUM (cap surfaces) or enforcing; either is acceptable, the run must finish",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_neutral_bypass_first": {
+  "expect": "neutral-named Gate: bypass first + 13 non-mergeable credential branches -> MEDIUM (not auth / unverified / conditional), never quiet",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_delegated": {
+  "expect": "Protect delegates to RequireLogin (past the cap, debug bypass first) via hd := RequireLogin(next); hd.ServeHTTP -> MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_bool_local_bypass": {
+  "expect": "ok := r.URL.Query().Get(\"debug\") == \"1\"; if !ok && !valid(tok) {401} -> debug param bypasses through a local bool -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_switches_authname": {
+  "expect": "auth-named middleware, 7 switches x 4 cases on credential headers (16384 paths); every switch has a pass-through case so a request with no headers passes -> MEDIUM (never-rejects or unverified), not trusted",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_cap_gin": {
+  "expect": "gin auth-named middleware: ?skip=1 bypass first, then 13 non-mergeable credential branches (past the cap) -> MEDIUM, not trusted",
+  "flag": [
+   "DELETE /admin/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p2_inert_credential_logs": {
+  "expect": "20 inert logging ifs that read the credential (`tok == \"\" || X-Ln`) then a real 401 check -> merged as inert, enforcing, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p2"
+ },
+ "p3_role_403_only": {
+  "expect": "neutral-named middleware whose ONLY rejection is a 403 on a role read from the session -> enforcing authz; route alone behind it -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users",
+   "/admin/reset"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_role_403_conditional": {
+  "expect": "role-403 gate skipped when a receiver setting DisableRBAC is set -> conditional MEDIUM (the 403 role check is the auth stop)",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_429_is_auth_failure": {
+  "expect": "the auth failure path answers 429 (lockout) on a failed credential check -> enforcing; quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_429_auth_conditional": {
+  "expect": "429-on-bad-credential gate with an Open receiver flag that skips it -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_status_in_variable": {
+  "expect": "the 401 code is held in a local variable -> enforcing; quiet. Second middleware RequireToken with const status and a ?debug bypass -> conditional MEDIUM on /b",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_status_const_other_pkg": {
+  "expect": "status code is a constant from another package (errs.Denied = 403) on a failed credential check, with a receiver bypass -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_status_from_func": {
+  "expect": "status comes from a helper func returning 401 -> enforcing; quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_cors_403_plus_bypass": {
+  "expect": "a CORS origin 403 (not auth) first, then a receiver bypass, then the real 401 -> conditional MEDIUM (the CORS stop must not count as enforcing)",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_echo_role_forbidden": {
+  "expect": "echo middleware whose only rejection is echo.ErrForbidden / NewHTTPError(403) on a role check -> quiet; a sibling RequireAuth-named echo mw that only rate-limits with 429 -> MEDIUM",
+  "flag": [
+   "DELETE /ops/cache"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users",
+   "/admin/reset"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_ratelimit_only_authname": {
+  "expect": "net/http middleware named RequireAuth-ish (AuthMiddleware) whose only stop is a 429 rate limit -> never rejects on auth -> MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p4_logger_nil_check": {
+  "expect": "receiver `logger` nil-check (logging only) before a real 401 -> enforcing, quiet (no false conditional)",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_field_nil_fail_closed": {
+  "expect": "receiver store nil -> 500 (fail closed), then a real 401 -> enforcing, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_field_nil_fail_open": {
+  "expect": "receiver verifier nil -> hand on (fail open when unconfigured) -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_global_config_getter_bypass": {
+  "expect": "global config read through a getter `config.Get().AuthDisabled()` skips the check -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_global_config_getter_inert": {
+  "expect": "config.Get().Verbose() only gates logging; real 401 after -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_env_func_bypass": {
+  "expect": "a package func authEnabled() reading os.Getenv gates the check -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_field_token_cache": {
+  "expect": "receiver cache keyed by the presented token: hit -> next (already authenticated), miss -> verify or 401 -> enforcing, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_metrics_field": {
+  "expect": "receiver metrics counter incremented under `if m.metrics != nil` on the failure path -> enforcing, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p5_func_value_map": {
+  "expect": "the open builder is only referenced as a value in a map (never called by name); it is live -> the open copy must be reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_func_passed_as_arg": {
+  "expect": "the open builder is passed as a func value to serve(); live -> open copy reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_func_var_alias": {
+  "expect": "var mk = openRouter; mk() served -> live, open copy reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_init_other_pkg": {
+  "expect": "another package registers an open router from an unexported func inside init(); main serves the authed one -> the init one is live (init runs on import) -> reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_init_listener_other_pkg": {
+  "expect": "another package starts its own open listener from init() via an unexported func; blank-imported -> reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_unexported_method_via_iface": {
+  "expect": "an unexported method reached only through an interface call registers the open copy -> live -> reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_method_value_struct_field": {
+  "expect": "an unexported method stored as a struct field func and called through the field -> live -> reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_goroutine_and_defer_call": {
+  "expect": "open builder called only via `go` statement -> live -> reported",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_truly_dead": {
+  "expect": "control: the open builder is never referenced at all -> dropped, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p5_reflect_exported_method": {
+  "expect": "an exported method called only via reflect.MethodByName builds an open router -> exported so never dropped -> reported (or INCOMPLETE)",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p5"
+ },
+ "p6_handlerfunc_signature": {
+  "expect": "func(http.HandlerFunc) http.HandlerFunc: enforcing Auth -> quiet; RequireToken of the same signature that never rejects -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_alice_chain": {
+  "expect": "alice: chain with RequireAuth via Then -> quiet; alice chain with Logger only via ThenFunc on an admin route -> MEDIUM; Append adds auth -> quiet",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users",
+   "/c/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_negroni_handlerfunc": {
+  "expect": "negroni.HandlerFunc(fn) with fn(w, r, next): enforcing -> quiet on the authed stack; a RequireAuth-named fn that never rejects on a second stack -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_gin_handlerschain_var": {
+  "expect": "gin.HandlersChain vars spread into registrations: authed chain -> quiet, a chain with only a logger -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_echo_factory_config": {
+  "expect": "in-tree echo factory JWT(cfg) returning echo.MiddlewareFunc; cfg.Skipper always true on /b -> conditional MEDIUM; /a without skipper -> quiet",
+  "flag": [
+   "DELETE /b/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_second_param_handler": {
+  "expect": "middleware takes (store, inner http.Handler); enforcing -> quiet; RequireAuth(store, inner) that never rejects -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_local_func_type": {
+  "expect": "next typed by a local alias `type HandlerFn = func(http.ResponseWriter, *http.Request)` / named type `type Next http.HandlerFunc`; RequireAuth never rejects -> MEDIUM; Guard enforces -> quiet",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_struct_next_field": {
+  "expect": "middleware as struct with a next field and ServeHTTP: authMW{next: mux} enforces -> quiet; RequireAuthMW{next} never rejects -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_fiber_authname_never_rejects": {
+  "expect": "fiber middleware named RequireAuth that only logs then c.Next() -> MEDIUM; FiberGuard enforcing -> quiet",
+  "flag": [
+   "DELETE /b/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_chi_middlewares_handler": {
+  "expect": "chi.Chain(RequireAuth).HandlerFunc(h) on one route -> quiet; chi.Chain(Logger).HandlerFunc(h) on /b -> MEDIUM",
+  "flag": [
+   "DELETE /b/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/a/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p8_chi_route_func": {
+  "expect": "r.Route(\"/admin\") with Use(RequireAuth) inside, r.Route(\"/ops\") without -> /ops flagged",
+  "flag": [],
+  "flag_any": [
+   "POST /ops/restart"
+  ],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_gin_use_after_route": {
+  "expect": "gin: group route registered before group.Use(GinAuth()) -> that route has no auth -> flagged; route after -> quiet",
+  "flag": [
+   "DELETE /admin/early/:id"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/admin/late"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_echo_group_arg": {
+  "expect": "echo Group with EchoAuth as arg -> quiet; sibling group without -> flagged",
+  "flag": [],
+  "flag_any": [
+   "POST /ops/restart"
+  ],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_nethttp_wildcard_write": {
+  "expect": "Go 1.22 mux: DELETE /files/{path...} open while siblings are wrapped -> flagged",
+  "flag": [
+   "DELETE /files/{path...}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_gorilla_subrouter_methods": {
+  "expect": "gorilla: PathPrefix(/api).Subrouter() with Use(RequireAuth) -> quiet; root.HandleFunc(/internal/flush).Methods(POST) -> flagged",
+  "flag": [
+   "POST /internal/flush"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/api/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_httprouter_mixed": {
+  "expect": "httprouter is documented as unmodelled: a mixed app must be INCOMPLETE (exit 3), never clean",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": true,
+  "exitcode": 3,
+  "cls": "p8"
+ },
+ "p8_fiber_group_arg": {
+  "expect": "fiber Group(\"/admin\", FiberGuard) -> quiet; app.Post(\"/ops/restart\") bare -> flagged",
+  "flag": [],
+  "flag_any": [
+   "POST /ops/restart"
+  ],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_broken_routes_file": {
+  "expect": "the routes file has a syntax error -> INCOMPLETE (exit 3), never 'no gaps' exit 0",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": true,
+  "exitcode": 3,
+  "cls": "p8"
+ },
+ "p8_closure_registrar_literal": {
+  "expect": "local closure reg := func(p string) { r.Delete(p, h) }; reg(\"/admin/keys\") on an open router -> flagged with a real path",
+  "flag": [
+   "DELETE /admin/keys/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_exit_low_only": {
+  "expect": "only a LOW finding (or none) at default -min medium with -exit-code -> exit 0; a fully authed app",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin"
+  ],
+  "incomplete": null,
+  "exitcode": 0,
+  "cls": "p8"
+ },
+ "p8_gin_any_and_handle": {
+  "expect": "gin r.Handle(\"DELETE\", ...) and r.Any on an open group while the authed group has the same paths -> flagged",
+  "flag": [
+   "DELETE /v2/users/:id",
+   "/v2/admin/purge"
+  ],
+  "flag_any": [],
+  "quiet": [
+   "/v1/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p8_middleware_order_after": {
+  "expect": "chi: r.Get registered then r.Use(RequireAuth) panics in chi at runtime; but on a Group, auth wrapping via With after-the-fact doesn't apply: r.With(Logger).Delete(...) under an authed parent Group -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users",
+   "/admin/reset"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ },
+ "p3_options_then_log_authname": {
+  "expect": "Authenticate answers CORS preflight (OPTIONS -> 204) and otherwise only logs the token and hands on -> never rejects on auth -> MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_bodylimit_then_log_authname": {
+  "expect": "JWTAuth's only stop is a 413 body-size limit; the token is never checked -> MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p3_ratelimit_then_log_requirelogin": {
+  "expect": "RequireLogin's only stop is a per-IP 429 limiter -> never rejects on auth -> MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p3"
+ },
+ "p4_env_inline_bypass": {
+  "expect": "if os.Getenv(\"NOAUTH\") == \"1\" { next } before the real check -> an environment flag: conditional MEDIUM (README: 'an environment flag ... is reported as conditional')",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_getter_neutral_bypass": {
+  "expect": "global config struct read through a getter with neutral names (Get().Insecure()) skips the check -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_pkgfunc_no_request_bypass": {
+  "expect": "a package func taking no request (devMode()) skips the check; it cannot be a credential check -> conditional MEDIUM",
+  "flag": [
+   "DELETE /admin/users/{id}"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p4_request_check_call_positive": {
+  "expect": "control: if sessionOK(r) { next; return } then 401 -> a positive check on the request, enforcing -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p4"
+ },
+ "p1_gin_run_plus_wrapped": {
+  "expect": "gin engine served via http.ListenAndServe(RequireAuth(e)) and also e.Run(\":8080\") (open) -> flagged",
+  "flag": [
+   "DELETE /admin/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_fiber_listen_plus_adaptor": {
+  "expect": "fiber app served through adaptor + RequireAuth on :9 and app.Listen (open) -> flagged",
+  "flag": [
+   "DELETE /admin/users/:id"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_func_wraps_listener": {
+  "expect": "serve(hd) wraps its parameter: http.ListenAndServe(addr, RequireAuth(hd)); the only listener -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_func_returns_wrapped": {
+  "expect": "secure(hd) returns RequireAuth(hd); http.ListenAndServe(\":8080\", secure(r)) -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p1_gorilla_prefix_admin": {
+  "expect": "gorilla root.PathPrefix(\"/admin/\").Handler(http.StripPrefix(\"/admin\", api)); api has GET /static/purge and POST /users -> paths must keep /admin: GET /admin/static/purge is NOT public, POST /admin/users MEDIUM",
+  "flag": [
+   "POST /admin/users",
+   "/admin/static/purge"
+  ],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p1"
+ },
+ "p6_negroni_new_args_authed": {
+  "expect": "negroni.New(negroni.HandlerFunc(checkAuth)) with UseHandler(mux): enforcing in-tree fn -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_negroni_use_authed": {
+  "expect": "control in the n26 shape: n := negroni.New(); n.Use(negroni.HandlerFunc(checkAuth)); n.UseHandler(mux) -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/admin/users"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_composed_bouncer": {
+  "expect": "portainer shape: AdminAccess(h) composes h = b.mwAuthenticatedUser(h); return h, where mwAuthenticatedUser rejects with 401 -> enforcing, quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/team_memberships"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p6_errchain_handler_args": {
+  "expect": "homebox shape: chain.ToHandlerFunc(handler, userMW...) where userMW = []errchain.Middleware{a.mwAuthToken} and mwAuthToken rejects -> quiet",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [
+   "/api/v1/tags"
+  ],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p6"
+ },
+ "p8_gorestful_unmodelled": {
+  "expect": "kubernetes-dashboard shape: go-restful (unmodelled) ws.Route(ws.DELETE(path).To(h)) mounted with http.Handle(\"/\", container) next to one modelled net/http route -> must be INCOMPLETE (exit 3) or find the go-restful routes; never complete with them missing",
+  "flag": [],
+  "flag_any": [],
+  "quiet": [],
+  "incomplete": true,
+  "exitcode": 3,
+  "cls": "p8"
+ },
+ "p8_registrar_register_method": {
+  "expect": "AdGuardHome shape: NewDefaultRegistrar(mux, wrap) in another package, passed through a config struct, Register(method, path, h) per route -> routes found (partial) or INCOMPLETE; never complete with them missing",
+  "flag": [],
+  "flag_any": [
+   "/control/users"
+  ],
+  "quiet": [],
+  "incomplete": null,
+  "exitcode": null,
+  "cls": "p8"
+ }
+}

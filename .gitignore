@@ -1,0 +1,6 @@
+/authzmap
+/bin/
+/dist/
+*.exe
+scratch/
+.DS_Store
